@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { HistoryItem, GenerationType } from '../types';
 
@@ -11,15 +12,17 @@ const getHistoryItemTitle = (item: HistoryItem): string => {
     switch (item.generationType) {
         case GenerationType.Photo:
             const photoCount = item.results.filter(r => r.type === 'photo' && !r.error).length;
-            return `${photoCount} Photo${photoCount > 1 ? 's' : ''}`;
+            return `${photoCount} عکس`;
+        case GenerationType.Video:
+            return 'ریلز ویدیویی';
         case GenerationType.Campaign:
-            return 'Full Campaign';
+            return 'کمپین کامل';
         case GenerationType.SocialPost:
-            return 'Social Post';
+            return 'پست شبکه اجتماعی';
         case GenerationType.MagicEdit:
-            return 'Magic Edit';
+            return 'ویرایش جادویی';
         default:
-            return 'Generation';
+            return 'خروجی';
     }
 }
 
@@ -28,13 +31,13 @@ const formatTimestamp = (timestamp: string): string => {
     const past = new Date(timestamp);
     const diffInSeconds = Math.floor((now.getTime() - past.getTime()) / 1000);
 
-    if (diffInSeconds < 60) return `${diffInSeconds}s ago`;
+    if (diffInSeconds < 60) return `${diffInSeconds} ثانیه پیش`;
     const diffInMinutes = Math.floor(diffInSeconds / 60);
-    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+    if (diffInMinutes < 60) return `${diffInMinutes} دقیقه پیش`;
     const diffInHours = Math.floor(diffInMinutes / 60);
-    if (diffInHours < 24) return `${diffInHours}h ago`;
+    if (diffInHours < 24) return `${diffInHours} ساعت پیش`;
     
-    return past.toLocaleDateString();
+    return past.toLocaleDateString('fa-IR');
 };
 
 
@@ -42,20 +45,20 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({ history, onSelectIte
   return (
     <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 sticky top-8 h-[calc(100vh-4rem)] flex flex-col">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-bold text-slate-200">Generation History</h2>
+        <h2 className="text-lg font-bold text-slate-200">تاریخچه ساخت</h2>
         {history.length > 0 && (
             <button 
                 onClick={onClearHistory}
                 className="text-xs text-slate-400 hover:text-red-400 transition-colors"
             >
-                Clear All
+                پاک کردن همه
             </button>
         )}
       </div>
       <div className="flex-grow overflow-y-auto -mr-3 pr-3 space-y-3">
         {history.length === 0 ? (
           <div className="text-center text-slate-500 pt-16">
-            <p>Your past generations will appear here.</p>
+            <p>خروجی‌های قبلی شما اینجا نمایش داده می‌شوند.</p>
           </div>
         ) : (
           history.map(item => (

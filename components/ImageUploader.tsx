@@ -48,7 +48,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ file, onFileChange
             <button 
               onClick={handleRemoveImage} 
               className="absolute top-2 right-2 bg-black bg-opacity-50 text-white rounded-full p-1 leading-none hover:bg-opacity-75"
-              aria-label="Remove image"
+              aria-label="حذف تصویر"
             >
               &#x2715;
             </button>
@@ -57,9 +57,9 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ file, onFileChange
           <div className="flex flex-col items-center">
             <UploadIcon />
             <span className="mt-2 text-sm text-slate-400">
-              <span className="font-semibold text-purple-400">Click to upload</span> or drag and drop
+              <span className="font-semibold text-purple-400">برای بارگذاری کلیک کنید</span> یا بکشید و رها کنید
             </span>
-            <p className="text-xs text-slate-500">PNG, JPG, GIF up to 10MB</p>
+            <p className="text-xs text-slate-500">PNG, JPG, GIF تا ۱۰ مگابایت</p>
           </div>
         )}
         <input id="file-upload" name="file-upload" type="file" className="sr-only" onChange={handleFileSelect} accept="image/png, image/jpeg, image/gif" />

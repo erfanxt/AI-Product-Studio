@@ -2,7 +2,6 @@
 import React from 'react';
 import { GenerationResult } from '../types';
 import { LoadingSpinner } from './LoadingSpinner';
-// FIX: Correctly import dataUrlToFile as an exported member from '../utils/helpers'.
 import { dataUrlToFile } from '../utils/helpers';
 
 interface ResultsDisplayProps {
@@ -10,6 +9,10 @@ interface ResultsDisplayProps {
   isLoading: boolean;
   loadingMessage: string;
   error: string | null;
+  videoGenerationStep: 'idle' | 'approving' | 'generating';
+  frameForApproval: string | null;
+  onApproveFrame: () => void;
+  onRegenerateFrame: () => void;
 }
 
 const PlaceholderIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
@@ -36,7 +39,7 @@ const ResultCard: React.FC<{result: GenerationResult, index: number}> = ({result
     return (
       <div className="aspect-square flex flex-col items-center justify-center text-center bg-slate-900 border border-red-500 rounded-lg p-4">
         <span className="text-3xl">⚠️</span>
-        <h3 className="mt-3 text-md font-bold text-red-400">Quality Check Failed</h3>
+        <h3 className="mt-3 text-md font-bold text-red-400">بررسی کیفیت ناموفق بود</h3>
         <p className="mt-1 text-xs text-red-300">{result.error}</p>
       </div>
     );
@@ -51,8 +54,25 @@ const ResultCard: React.FC<{result: GenerationResult, index: number}> = ({result
             href={result.data}
             download={`ai-product-photo-${Date.now()}.png`}
             className="absolute bottom-3 right-3 bg-black bg-opacity-40 text-white rounded-full p-2 hover:bg-opacity-60 transition-all opacity-0 group-hover:opacity-100 cursor-pointer"
-            aria-label="Download photo"
-            title="Download photo"
+            aria-label="دانلود عکس"
+            title="دانلود عکس"
+          >
+            <DownloadIcon className="h-5 w-5" />
+          </a>
+        </div>
+      );
+    case 'video':
+      return (
+        <div className="group relative overflow-hidden rounded-lg shadow-lg bg-slate-800 w-full aspect-[9/16] sm:aspect-video">
+          <video src={result.data} controls autoPlay loop muted className="w-full h-full object-cover">
+            مرورگر شما از تگ ویدیو پشتیبانی نمی‌کند.
+          </video>
+           <a
+            href={result.data}
+            download={`ai-product-video-${Date.now()}.mp4`}
+            className="absolute bottom-3 right-3 bg-black bg-opacity-40 text-white rounded-full p-2 hover:bg-opacity-60 transition-all opacity-0 group-hover:opacity-100 cursor-pointer"
+            aria-label="دانلود ویدیو"
+            title="دانلود ویدیو"
           >
             <DownloadIcon className="h-5 w-5" />
           </a>
@@ -70,11 +90,11 @@ const ResultCard: React.FC<{result: GenerationResult, index: number}> = ({result
   }
 }
 
-export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results, isLoading, loadingMessage, error }) => {
+export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results, isLoading, loadingMessage, error, videoGenerationStep, frameForApproval, onApproveFrame, onRegenerateFrame }) => {
 
   const handleShare = async (imageBase64: string, captionText: string) => {
     if (!navigator.share) {
-        alert("Web Share API is not supported in your browser. Please copy the text and download the image manually.");
+        alert("API اشتراک‌گذاری وب در مرورگر شما پشتیبانی نمی‌شود. لطفاً متن را کپی کرده و تصویر را به صورت دستی دانلود کنید.");
         return;
     }
 
@@ -83,20 +103,20 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results, isLoadi
         
         if (navigator.canShare && navigator.canShare({ files: [imageFile] })) {
             await navigator.share({
-                title: 'AI Generated Product Post',
+                title: 'پست محصول ساخته شده با هوش مصنوعی',
                 text: captionText,
                 files: [imageFile],
             });
         } else {
              await navigator.share({
-                title: 'AI Generated Product Post',
+                title: 'پست محصول ساخته شده با هوش مصنوعی',
                 text: captionText,
             });
         }
     } catch (error) {
         console.error('Error sharing:', error);
         if ((error as Error).name !== 'AbortError') {
-             alert('An error occurred while trying to share.');
+             alert('خطایی هنگام اشتراک‌گذاری رخ داد.');
         }
     }
   };
@@ -111,12 +131,31 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results, isLoadi
         </div>
       );
     }
+    
+    if (videoGenerationStep === 'approving' && frameForApproval) {
+        return (
+            <div className="flex flex-col items-center justify-center h-full text-center w-full max-w-md mx-auto">
+                <h2 className="text-2xl font-bold text-slate-200 mb-4">فریم شروع ویدیو را تایید می‌کنید؟</h2>
+                <p className="text-slate-400 mb-4">این تصویر، فریم شروع و پایان ویدیوی شما خواهد بود. برای ادامه تایید کنید یا برای دریافت یک فریم جدید، دوباره بسازید.</p>
+                <img src={frameForApproval} alt="Video start frame for approval" className="rounded-lg shadow-lg w-full" />
+                <div className="flex gap-4 mt-6 w-full">
+                    <button onClick={onRegenerateFrame} className="w-full flex items-center justify-center gap-2 p-3 font-semibold text-white bg-slate-600 rounded-lg hover:bg-slate-500 transition-colors">
+                        🔄 ساخت مجدد فریم
+                    </button>
+                    <button onClick={onApproveFrame} className="w-full flex items-center justify-center gap-2 p-3 font-semibold text-white bg-green-600 rounded-lg hover:bg-green-500 transition-colors">
+                        ✅ تایید و ساخت ویدیو
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
 
     if (error) {
       return (
         <div className="flex flex-col items-center justify-center h-full text-center bg-red-900/20 border border-red-500 rounded-lg p-6">
           <span className="text-4xl">😞</span>
-          <h3 className="mt-4 text-xl font-bold text-red-400">Generation Failed</h3>
+          <h3 className="mt-4 text-xl font-bold text-red-400">ساخت با شکست مواجه شد</h3>
           <p className="mt-2 text-red-300">{error}</p>
         </div>
       );
@@ -126,14 +165,24 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results, isLoadi
       return (
         <div className="flex flex-col items-center justify-center h-full text-center">
           <PlaceholderIcon />
-          <h3 className="mt-4 text-xl font-bold text-slate-400">Your Creations Appear Here</h3>
-          <p className="mt-1 text-slate-500">Upload an image and click "Generate" to see the magic happen.</p>
+          <h3 className="mt-4 text-xl font-bold text-slate-400">خروجی‌های شما اینجا نمایش داده می‌شوند</h3>
+          <p className="mt-1 text-slate-500">یک تصویر بارگذاری کنید و روی «همین حالا بساز» کلیک کنید تا جادو اتفاق بیفتد.</p>
         </div>
       );
     }
 
     const isCampaign = results.length > 2 && results.some(r => r.type === 'text');
     const isSocialPost = results.length === 2 && results.some(r => r.type === 'photo') && results.some(r => r.type === 'text');
+    const isSingleVideo = results.length === 1 && results[0].type === 'video';
+    
+    if (isSingleVideo) {
+       return (
+         <div className="w-full max-w-md mx-auto">
+           <h2 className="text-2xl font-bold text-slate-200 border-b-2 border-slate-700 pb-2 mb-4">ریلز ویدیویی ساخته شده توسط هوش مصنوعی</h2>
+            <ResultCard result={results[0]} index={0} />
+         </div>
+       )
+    }
 
     if (isCampaign) {
       const photos = results.filter(r => r.type === 'photo');
@@ -143,16 +192,16 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results, isLoadi
       return (
         <div className="w-full space-y-8">
             <div>
-                <h2 className="text-2xl font-bold text-slate-200 border-b-2 border-slate-700 pb-2 mb-4">Your AI-Generated Campaign</h2>
+                <h2 className="text-2xl font-bold text-slate-200 border-b-2 border-slate-700 pb-2 mb-4">کمپین ساخته شده توسط هوش مصنوعی شما</h2>
             </div>
             <section>
-                <h3 className="text-xl font-semibold text-purple-400 mb-4">Product Photos</h3>
+                <h3 className="text-xl font-semibold text-purple-400 mb-4">عکس‌های محصول</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {photos.map((p, i) => <ResultCard key={`photo-${i}`} result={p} index={i} />)}
                 </div>
             </section>
             <section>
-                <h3 className="text-xl font-semibold text-teal-400 mb-4">Social Media Captions</h3>
+                <h3 className="text-xl font-semibold text-teal-400 mb-4">کپشن‌های شبکه اجتماعی</h3>
                 <div className="space-y-4">
                   {texts.map((t, i) => (
                     <div key={`text-container-${i}`} className="bg-slate-900/70 border border-slate-700 rounded-lg p-4">
@@ -163,10 +212,10 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results, isLoadi
                           onClick={() => handleShare(primaryPhoto.data, t.data)}
                           className="mt-4 inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-sky-600 rounded-lg hover:bg-sky-700 transition-colors disabled:opacity-50"
                           disabled={!navigator.share}
-                          title={!navigator.share ? "Sharing not supported on this browser" : `Share with ${t.title} caption`}
+                          title={!navigator.share ? "اشتراک‌گذاری در این مرورگر پشتیبانی نمی‌شود" : `اشتراک‌گذاری با کپشن ${t.title}`}
                         >
                           <ShareIcon className="w-5 h-5" />
-                          Share Post
+                          اشتراک‌گذاری پست
                         </button>
                       )}
                     </div>
@@ -183,7 +232,7 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results, isLoadi
         return (
             <div className="w-full space-y-6">
                  <div>
-                    <h2 className="text-2xl font-bold text-slate-200 border-b-2 border-slate-700 pb-2 mb-4">Your AI-Generated Social Post</h2>
+                    <h2 className="text-2xl font-bold text-slate-200 border-b-2 border-slate-700 pb-2 mb-4">پست شبکه اجتماعی ساخته شده توسط هوش مصنوعی شما</h2>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                     <ResultCard key="social-photo" result={photo} index={0} />
@@ -193,10 +242,10 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results, isLoadi
                             onClick={() => handleShare(photo.data, caption.data)}
                             className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white bg-sky-600 rounded-lg hover:bg-sky-700 transition-colors disabled:opacity-50"
                             disabled={!navigator.share}
-                             title={!navigator.share ? "Sharing not supported on this browser" : "Share post"}
+                             title={!navigator.share ? "اشتراک‌گذاری در این مرورگر پشتیبانی نمی‌شود" : "اشتراک‌گذاری پست"}
                         >
                              <ShareIcon className="w-5 h-5" />
-                            Share on Social Media
+                            اشتراک‌گذاری در شبکه‌های اجتماعی
                         </button>
                     </div>
                 </div>

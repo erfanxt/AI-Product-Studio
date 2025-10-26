@@ -24,12 +24,12 @@ export const Header: React.FC = () => {
                 </div>
                 <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight">
                     <span className="bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
-                        AI Product Studio
+                        استودیو محصول هوش مصنوعی
                     </span>
                 </h1>
             </div>
             <p className="mt-4 text-lg text-slate-400 max-w-2xl mx-auto">
-                Turn one product photo into an entire campaign. Generate stunning images and viral video reels for your online store.
+                یک عکس محصول را به یک کمپین کامل تبدیل کنید. تصاویر خیره‌کننده و ریلزهای ویدیویی وایرال برای فروشگاه آنلاین خود بسازید.
             </p>
         </header>
     );
